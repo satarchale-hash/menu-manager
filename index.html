@@ -6,28 +6,16 @@
     <title>Ristorante L'Approdo</title>
     <meta name="description" content="Ristorante L'Approdo — Calasetta, Sardegna" />
 
-    <!-- Manifest dinamico: cliente vs admin -->
-    <script>
-      const isAdmin = window.location.pathname.startsWith('/admin')
-      const link = document.createElement('link')
-      link.rel = 'manifest'
-      link.href = isAdmin ? '/manifest-admin.json' : '/manifest.json'
-      document.head.appendChild(link)
-    </script>
-
-    <!-- Theme color -->
-    <meta name="theme-color" id="theme-color" content="#0a0a0a" />
-    <script>
-      if (window.location.pathname.startsWith('/admin')) {
-        document.getElementById('theme-color').content = '#111111'
-      }
-    </script>
+    <!-- Manifest cliente statico -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0a0a0a" />
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
 
     <!-- Apple PWA cliente -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="L'Approdo" />
     <link rel="apple-touch-icon" href="/icons/icon-152x152.png" />
@@ -44,7 +32,7 @@
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
       html { height: 100%; }
-      body { min-height: 100%; }
+      body { min-height: 100%; background: #0a0a0a; }
       ::-webkit-scrollbar { width: 4px; }
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 2px; }

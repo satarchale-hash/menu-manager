@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>L'Approdo — Gestione Menu</title>
+    <meta name="description" content="Gestione del menu del Ristorante L'Approdo" />
+
+    <!-- Manifest admin statico -->
+    <link rel="manifest" href="/manifest-admin.json" />
+    <meta name="theme-color" content="#111111" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons-admin/favicon-32x32.png" />
+
+    <!-- Apple PWA admin -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Gestione" />
+    <link rel="apple-touch-icon" href="/icons-admin/icon-152x152.png" />
+
+    <!-- Windows -->
+    <meta name="msapplication-TileImage" content="/icons-admin/icon-144x144.png" />
+    <meta name="msapplication-TileColor" content="#111111" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html { height: 100%; }
+      body { min-height: 100%; background: #fafafa; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw-admin.js').catch(() => {})
+        })
+      }
+    </script>
+  </body>
+</html>

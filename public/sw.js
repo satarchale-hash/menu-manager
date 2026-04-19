@@ -1,9 +1,10 @@
-const CACHE_NAME = 'lapprodo-v3'
-const STATIC_ASSETS = ['/', '/admin', '/index.html', '/manifest.json', '/manifest-admin.json']
+const CACHE_NAME = 'lapprodo-v4'
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS).catch(() => {}))
+    caches.open(CACHE_NAME).then(cache =>
+      cache.addAll(['/', '/index.html']).catch(() => {})
+    )
   )
   self.skipWaiting()
 })
