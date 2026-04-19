@@ -100,6 +100,39 @@ export default function DishModal({ dish, category, onSave, onClose }) {
               onFocus={onFocus} onBlur={onBlur} />
           </div>
 
+          {/* ALLERGENI – SPOSTATO QUI per visibilità immediata */}
+          <div>
+            <label style={{ fontSize: '11px', color: '#aaa', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '10px' }}>
+              Allergeni — Reg. UE 1169/2011
+              {form.allergens.length > 0 && (
+                <span style={{ marginLeft: '8px', color: '#7a5c00', background: '#fff8e1', border: '1px solid #f0d060', borderRadius: '10px', padding: '1px 8px', fontSize: '10px', fontWeight: 600 }}>
+                  {form.allergens.length} selezionat{form.allergens.length > 1 ? 'i' : 'o'}
+                </span>
+              )}
+            </label>
+            <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '8px', textAlign: 'right' }}>
+              ⬇️ Scorri se necessario ⬇️
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {ALLERGENS.map(a => {
+                const active = form.allergens.includes(a.id)
+                return (
+                  <button key={a.id} onClick={() => toggleAllergen(a.id)} style={{
+                    display: 'flex', alignItems: 'center', gap: '4px',
+                    padding: '6px 12px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer',
+                    border: `1.5px solid ${active ? '#1a1a1a' : '#e8e8e8'}`,
+                    background: active ? '#1a1a1a' : '#fff',
+                    color: active ? '#fff' : '#444',
+                    fontWeight: active ? 600 : 400,
+                    fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
+                  }}>
+                    <span>{a.icon}</span> {a.it}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           {/* Prezzo + Categoria */}
           <div style={{ display: 'flex', gap: '10px' }}>
             <div style={{ flex: 1 }}>
@@ -140,34 +173,6 @@ export default function DishModal({ dish, category, onSave, onClose }) {
             ))}
           </div>
 
-          {/* Allergeni */}
-          <div>
-            <label style={{ fontSize: '11px', color: '#aaa', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '10px' }}>
-              Allergeni — Reg. UE 1169/2011
-              {form.allergens.length > 0 && (
-                <span style={{ marginLeft: '8px', color: '#7a5c00', background: '#fff8e1', border: '1px solid #f0d060', borderRadius: '10px', padding: '1px 8px', fontSize: '10px', fontWeight: 600 }}>
-                  {form.allergens.length} selezionat{form.allergens.length > 1 ? 'i' : 'o'}
-                </span>
-              )}
-            </label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {ALLERGENS.map(a => {
-                const active = form.allergens.includes(a.id)
-                return (
-                  <button key={a.id} onClick={() => toggleAllergen(a.id)} style={{
-                    display: 'flex', alignItems: 'center', gap: '4px',
-                    padding: '5px 10px', borderRadius: '20px', fontSize: '12px', cursor: 'pointer',
-                    border: `1.5px solid ${active ? '#111' : '#e8e8e8'}`,
-                    background: active ? '#111' : '#fff',
-                    color: active ? '#fff' : '#666',
-                    fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
-                  }}>
-                    <span>{a.icon}</span> {a.it}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
