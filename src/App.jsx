@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { menu as initialMenu, CATEGORIES, CATEGORY_LABELS, LANGUAGES, ALLERGENS } from './data.js'
+import { useState, useEffect } from 'react'
+import { CATEGORIES, CATEGORY_LABELS, LANGUAGES, ALLERGENS } from './data.js'
+import { fetchMenu, saveMenu } from './api.js'
 import DishModal from './components/DishModal.jsx'
 
 let nextId = 1000
@@ -11,88 +12,45 @@ function t(field) {
   return field[LANG] ?? ''
 }
 
-// ── Riga piatto ─────────────────────────────────────────────
 function DishRow({ dish, onEdit, onDelete, onToggle, showCategory, categoryLabel }) {
-  const dishAllergens = (dish.allergens || [])
-    .map(id => ALLERGENS.find(a => a.id === id))
-    .filter(Boolean)
-
+  const dishAllergens = (dish.allergens || []).map(id => ALLERGENS.find(a => a.id === id)).filter(Boolean)
   return (
-    <div style={{
-      background: '#fff', border: '1px solid #f0f0f0', borderRadius: '16px',
-      padding: '14px 20px', display: 'flex', alignItems: 'flex-start', gap: '14px',
-      boxShadow: '0 1px 4px rgba(0,0,0,0.04)', opacity: dish.available ? 1 : 0.5,
-    }}>
+    <div style={{ background: '#fff', border: '1px solid #f0f0f0', borderRadius: '16px', padding: '14px 20px', display: 'flex', alignItems: 'flex-start', gap: '14px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', opacity: dish.available ? 1 : 0.5 }}>
       <div style={{ flex: 1, minWidth: 0 }}>
-        {/* Nome + badge */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '18px', fontWeight: 600, color: '#111' }}>
-            {t(dish.name)}
-          </span>
+          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '18px', fontWeight: 600, color: '#111' }}>{t(dish.name)}</span>
           {dish.frozen && <span style={{ fontSize: '10px', color: '#aaa', fontFamily: 'monospace' }}>❄</span>}
-          {!dish.available && (
-            <span style={{ fontSize: '10px', background: '#f5f5f5', color: '#bbb', borderRadius: '4px', padding: '2px 7px', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              non disp.
-            </span>
-          )}
-          {showCategory && categoryLabel && (
-            <span style={{ fontSize: '11px', color: '#ccc', fontFamily: 'monospace' }}>{categoryLabel}</span>
-          )}
+          {!dish.available && <span style={{ fontSize: '10px', background: '#f5f5f5', color: '#bbb', borderRadius: '4px', padding: '2px 7px', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.5px' }}>non disp.</span>}
+          {showCategory && categoryLabel && <span style={{ fontSize: '11px', color: '#ccc', fontFamily: 'monospace' }}>{categoryLabel}</span>}
         </div>
-
-        {/* Descrizione */}
-        {t(dish.desc) && (
-          <div style={{ fontSize: '13px', color: '#999', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {t(dish.desc)}
-          </div>
-        )}
-
-        {/* Allergeni */}
+        {t(dish.desc) && <div style={{ fontSize: '13px', color: '#999', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(dish.desc)}</div>}
         {dishAllergens.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '7px' }}>
             {dishAllergens.map(a => (
-              <span key={a.id} title={a.it} style={{
-                fontSize: '11px', background: '#fff8e1', color: '#7a5c00',
-                border: '1px solid #f0d060', borderRadius: '4px',
-                padding: '2px 7px', fontFamily: "'DM Sans', sans-serif",
-                display: 'inline-flex', alignItems: 'center', gap: '3px',
-              }}>
+              <span key={a.id} title={a.it} style={{ fontSize: '11px', background: '#fff8e1', color: '#7a5c00', border: '1px solid #f0d060', borderRadius: '4px', padding: '2px 7px', fontFamily: "'DM Sans', sans-serif", display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                 {a.icon} {a.it}
               </span>
             ))}
           </div>
         )}
       </div>
-
-      {/* Prezzo + azioni */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', flexShrink: 0 }}>
         <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '20px', fontWeight: 700, color: '#111' }}>
           €{dish.price.toFixed(2)}{dish.priceNote ? dish.priceNote.it : ''}
         </div>
         <div style={{ display: 'flex', gap: '6px' }}>
-          <button onClick={() => onToggle(dish.id)} title={dish.available ? 'Rendi non disponibile' : 'Rendi disponibile'}
-            style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid #e8e8e8', background: '#fff', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {dish.available ? '⏸' : '▶'}
-          </button>
-          <button onClick={() => onEdit(dish)}
-            style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid #e8e8e8', background: '#fff', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            ✏️
-          </button>
-          <button onClick={() => onDelete(dish.id, t(dish.name))}
-            style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid #fce4ec', background: '#fff5f7', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            🗑
-          </button>
+          <button onClick={() => onToggle(dish.id)} title={dish.available ? 'Rendi non disponibile' : 'Rendi disponibile'} style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid #e8e8e8', background: '#fff', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{dish.available ? '⏸' : '▶'}</button>
+          <button onClick={() => onEdit(dish)} style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid #e8e8e8', background: '#fff', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✏️</button>
+          <button onClick={() => onDelete(dish.id, t(dish.name))} style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid #fce4ec', background: '#fff5f7', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🗑</button>
         </div>
       </div>
     </div>
   )
 }
 
-// ── Pulsante aggiungi ────────────────────────────────────────
 function AddBtn({ label, onClick }) {
   return (
-    <button onClick={onClick}
-      style={{ background: 'transparent', border: '2px dashed #e0e0e0', borderRadius: '16px', padding: '14px', cursor: 'pointer', fontSize: '13px', color: '#bbb', fontFamily: "'DM Sans', sans-serif", transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    <button onClick={onClick} style={{ background: 'transparent', border: '2px dashed #e0e0e0', borderRadius: '16px', padding: '14px', cursor: 'pointer', fontSize: '13px', color: '#bbb', fontFamily: "'DM Sans', sans-serif", transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       onMouseEnter={e => { e.currentTarget.style.borderColor = '#111'; e.currentTarget.style.color = '#111'; e.currentTarget.style.background = '#fafafa' }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = '#e0e0e0'; e.currentTarget.style.color = '#bbb'; e.currentTarget.style.background = 'transparent' }}>
       + {label}
@@ -100,9 +58,11 @@ function AddBtn({ label, onClick }) {
   )
 }
 
-// ── App ─────────────────────────────────────────────────────
 export default function App() {
-  const [menu, setMenu]                     = useState(initialMenu)
+  const [menu, setMenu]                     = useState({})
+  const [loading, setLoading]               = useState(true)
+  const [saving, setSaving]                 = useState(false)
+  const [hasChanges, setHasChanges]         = useState(false)
   const [customCategories, setCustomCats]   = useState([])
   const [activeTab, setActiveTab]           = useState('categorie')
   const [activeCategory, setActiveCat]      = useState('antipasti')
@@ -113,26 +73,55 @@ export default function App() {
   const [newCatName, setNewCatName]         = useState('')
   const [toast, setToast]                   = useState(null)
 
+  // Carica menu dal server all'avvio
+  useEffect(() => {
+    fetchMenu()
+      .then(data => {
+        if (Object.keys(data).length > 0) setMenu(data)
+        setLoading(false)
+      })
+      .catch(() => {
+        showToast('⚠️ Errore di connessione al server')
+        setLoading(false)
+      })
+  }, [])
+
   const allCats  = [...CATEGORIES, ...customCategories.filter(c => !CATEGORIES.includes(c))]
   const allItems = allCats.flatMap(cat => (menu[cat] || []).map(d => ({ ...d, _cat: cat })))
   const unavailableCount = allItems.filter(d => !d.available).length
   const availableCount   = allItems.length - unavailableCount
 
-  function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2800) }
+  function showToast(msg, duration = 2800) { setToast(msg); setTimeout(() => setToast(null), duration) }
+
+  function markChanged(newMenu) {
+    setMenu(newMenu)
+    setHasChanges(true)
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    try {
+      await saveMenu(menu)
+      setHasChanges(false)
+      showToast('✓ Menu salvato!')
+    } catch {
+      showToast('⚠️ Errore nel salvataggio')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   function saveDish(dish, category) {
-    setMenu(prev => {
-      const next = JSON.parse(JSON.stringify(prev))
-      if (!isNew) {
-        for (const cat of Object.keys(next)) next[cat] = next[cat].filter(d => d.id !== dish.id)
-      }
-      const newDish = isNew ? { ...dish, id: `custom-${nextId++}` } : dish
-      if (!next[category]) next[category] = []
-      const idx = next[category].findIndex(d => d.id === newDish.id)
-      if (idx >= 0) next[category][idx] = newDish
-      else next[category].push(newDish)
-      return next
-    })
+    const next = JSON.parse(JSON.stringify(menu))
+    if (!isNew) {
+      for (const cat of Object.keys(next)) next[cat] = next[cat].filter(d => d.id !== dish.id)
+    }
+    const newDish = isNew ? { ...dish, id: `custom-${nextId++}` } : dish
+    if (!next[category]) next[category] = []
+    const idx = next[category].findIndex(d => d.id === newDish.id)
+    if (idx >= 0) next[category][idx] = newDish
+    else next[category].push(newDish)
+    markChanged(next)
     setActiveCat(category)
     setEditingDish(null)
     setIsNew(false)
@@ -140,23 +129,19 @@ export default function App() {
   }
 
   function deleteDish(id, name) {
-    setMenu(prev => {
-      const next = JSON.parse(JSON.stringify(prev))
-      for (const cat of Object.keys(next)) next[cat] = next[cat].filter(d => d.id !== id)
-      return next
-    })
+    const next = JSON.parse(JSON.stringify(menu))
+    for (const cat of Object.keys(next)) next[cat] = next[cat].filter(d => d.id !== id)
+    markChanged(next)
     showToast(`"${name}" rimosso.`)
   }
 
   function toggleAvailability(id) {
-    setMenu(prev => {
-      const next = JSON.parse(JSON.stringify(prev))
-      for (const cat of Object.keys(next)) {
-        const idx = (next[cat] || []).findIndex(d => d.id === id)
-        if (idx >= 0) { next[cat][idx].available = !next[cat][idx].available; break }
-      }
-      return next
-    })
+    const next = JSON.parse(JSON.stringify(menu))
+    for (const cat of Object.keys(next)) {
+      const idx = (next[cat] || []).findIndex(d => d.id === id)
+      if (idx >= 0) { next[cat][idx].available = !next[cat][idx].available; break }
+    }
+    markChanged(next)
   }
 
   function addCategory() {
@@ -164,7 +149,8 @@ export default function App() {
     if (!name) return
     const key = name.toLowerCase().replace(/\s+/g, '_')
     if (menu[key]) { showToast('Categoria già esistente.'); return }
-    setMenu(prev => ({ ...prev, [key]: [] }))
+    const next = { ...menu, [key]: [] }
+    markChanged(next)
     setCustomCats(prev => [...prev, key])
     setNewCatName('')
     showToast(`Categoria "${name}" aggiunta.`)
@@ -172,7 +158,9 @@ export default function App() {
 
   function removeCategory(key) {
     if ((menu[key] || []).length > 0) { showToast('Svuota prima la categoria.'); return }
-    setMenu(prev => { const next = { ...prev }; delete next[key]; return next })
+    const next = { ...menu }
+    delete next[key]
+    markChanged(next)
     setCustomCats(prev => prev.filter(c => c !== key))
     if (activeCategory === key) setActiveCat('antipasti')
     showToast('Categoria rimossa.')
@@ -201,64 +189,64 @@ export default function App() {
   })
 
   const tabs = [
-    { key: 'totali',          label: 'Totali',          value: allItems.length,        icon: '🍽️' },
+    { key: 'totali',          label: 'Totali',          value: allItems.length,     icon: '🍽️' },
     { key: 'categorie',       label: 'Categorie',        value: allCats.filter(c => (menu[c]||[]).length > 0).length, icon: '📂' },
-    { key: 'non-disponibili', label: 'Non disponibili',  value: unavailableCount,       icon: '⏸️' },
-    { key: 'disponibili',     label: 'Disponibili',      value: availableCount,         icon: '✓'  },
+    { key: 'non-disponibili', label: 'Non disponibili',  value: unavailableCount,    icon: '⏸️' },
+    { key: 'disponibili',     label: 'Disponibili',      value: availableCount,      icon: '✓'  },
   ]
+
+  if (loading) return (
+    <div style={{ minHeight: '100vh', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant Garamond', serif", fontSize: '20px', color: '#aaa' }}>
+      Caricamento menu...
+    </div>
+  )
 
   return (
     <div style={{ minHeight: '100vh', background: '#fafafa', fontFamily: "'DM Sans', sans-serif" }}>
-
-      {/* Toast */}
       {toast && (
         <div style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', background: '#111', color: '#fff', padding: '12px 22px', borderRadius: '40px', fontSize: '13px', fontWeight: 500, zIndex: 2000, boxShadow: '0 8px 30px rgba(0,0,0,0.25)', whiteSpace: 'nowrap' }}>
           {toast}
         </div>
       )}
 
-      {/* DishModal */}
       {(isNew || editingDish) && (
-        <DishModal
-          dish={isNew ? null : editingDish}
-          category={editingCategory}
-          onSave={saveDish}
-          onClose={() => { setEditingDish(null); setIsNew(false) }}
-        />
+        <DishModal dish={isNew ? null : editingDish} category={editingCategory} onSave={saveDish} onClose={() => { setEditingDish(null); setIsNew(false) }} />
       )}
 
-      {/* ── Header ── */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '0 32px' }}>
-        <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '64px', gap: '20px' }}>
+      {/* Header */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '0 32px', position: 'sticky', top: 0, zIndex: 100 }}>
+        <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '64px', gap: '16px' }}>
           <div>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '28px', fontWeight: 700, color: '#111' }}>
-              Ristorante L'Approdo
-            </span>
-            <span style={{ fontSize: '11px', color: '#bbb', fontFamily: 'monospace', marginLeft: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              Gestione Menu
-            </span>
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '24px', fontWeight: 700, color: '#111' }}>Ristorante L'Approdo</span>
+            <span style={{ fontSize: '11px', color: '#bbb', fontFamily: 'monospace', marginLeft: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>Gestione Menu</span>
           </div>
           <div style={{ flex: 1 }} />
-          {/* Ricerca */}
           <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#bbb', fontSize: '14px' }}>⌕</span>
-            <input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Cerca piatto o ingrediente..."
-              style={{ border: '1.5px solid #ebebeb', borderRadius: '30px', padding: '8px 14px 8px 32px', fontSize: '13px', outline: 'none', fontFamily: "'DM Sans', sans-serif", width: '260px', transition: 'all 0.2s', background: '#fafafa', color: '#333' }}
-              onFocus={e => { e.target.style.borderColor = '#111'; e.target.style.width = '300px' }}
-              onBlur={e => { e.target.style.borderColor = '#ebebeb'; e.target.style.width = '260px' }}
+            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#bbb' }}>⌕</span>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cerca piatto o ingrediente..."
+              style={{ border: '1.5px solid #ebebeb', borderRadius: '30px', padding: '8px 14px 8px 32px', fontSize: '13px', outline: 'none', fontFamily: "'DM Sans', sans-serif", width: '240px', background: '#fafafa', color: '#333' }}
+              onFocus={e => e.target.style.borderColor = '#111'} onBlur={e => e.target.style.borderColor = '#ebebeb'}
             />
           </div>
+          {/* Pulsante SALVA */}
+          <button onClick={handleSave} disabled={!hasChanges || saving} style={{
+            background: hasChanges ? '#111' : '#e0e0e0',
+            color: hasChanges ? '#fff' : '#aaa',
+            border: 'none', borderRadius: '30px', padding: '9px 20px',
+            fontSize: '13px', fontWeight: 600, cursor: hasChanges ? 'pointer' : 'not-allowed',
+            fontFamily: "'DM Sans', sans-serif", transition: 'all 0.2s',
+            display: 'flex', alignItems: 'center', gap: '6px',
+          }}>
+            {saving ? '⏳' : '💾'} {saving ? 'Salvataggio...' : 'Salva'}
+          </button>
         </div>
       </div>
 
       <div style={{ maxWidth: '960px', margin: '0 auto', padding: '24px 32px' }}>
 
-        {/* ── Filtro allergeni ── */}
+        {/* Filtro allergeni */}
         <div style={{ marginBottom: '18px', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: '11px', color: '#aaa', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '1px', marginRight: '4px', flexShrink: 0 }}>
-            Filtra per allergene:
-          </span>
+          <span style={{ fontSize: '11px', color: '#aaa', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '1px', marginRight: '4px', flexShrink: 0 }}>Filtra per allergene:</span>
           {ALLERGENS.map(a => (
             <button key={a.id} onClick={() => setAllergenFilter(allergenFilter === a.id ? null : a.id)} style={{
               padding: '3px 9px', borderRadius: '20px', fontSize: '11px', cursor: 'pointer',
@@ -267,9 +255,7 @@ export default function App() {
               color: allergenFilter === a.id ? '#7a5c00' : '#888',
               fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
               display: 'inline-flex', alignItems: 'center', gap: '3px',
-            }}>
-              {a.icon} {a.it}
-            </button>
+            }}>{a.icon} {a.it}</button>
           ))}
           {allergenFilter && (
             <button onClick={() => setAllergenFilter(null)} style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', cursor: 'pointer', border: '1.5px solid #fce4ec', background: '#fff5f7', color: '#c62828', fontFamily: "'DM Sans', sans-serif" }}>
@@ -278,7 +264,7 @@ export default function App() {
           )}
         </div>
 
-        {/* ── Tab cards ── */}
+        {/* Tab cards */}
         <div style={{ display: 'flex', gap: '14px', marginBottom: '24px' }}>
           {tabs.map(tab => {
             const active = activeTab === tab.key
@@ -298,20 +284,17 @@ export default function App() {
           })}
         </div>
 
-        {/* ══ TOTALI ══ */}
+        {/* TOTALI */}
         {activeTab === 'totali' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {filterItems(allItems).map(dish => (
-              <DishRow key={dish.id} {...dishRowProps(dish)} showCategory categoryLabel={CATEGORY_LABELS[dish._cat]?.it || dish._cat} />
-            ))}
+            {filterItems(allItems).map(dish => <DishRow key={dish.id} {...dishRowProps(dish)} showCategory categoryLabel={CATEGORY_LABELS[dish._cat]?.it || dish._cat} />)}
             <AddBtn label="Aggiungi piatto" onClick={() => { setIsNew(true); setEditingDish(null) }} />
           </div>
         )}
 
-        {/* ══ CATEGORIE ══ */}
+        {/* CATEGORIE */}
         {activeTab === 'categorie' && (
           <>
-            {/* Sub-tab */}
             <div style={{ display: 'flex', gap: '6px', marginBottom: '20px', flexWrap: 'wrap' }}>
               {allCats.map(cat => (
                 <button key={cat} onClick={() => setActiveCat(cat)} style={{
@@ -324,27 +307,18 @@ export default function App() {
                   boxShadow: activeCategory === cat ? '0 2px 8px rgba(0,0,0,0.07)' : 'none',
                 }}>
                   {CATEGORY_LABELS[cat]?.it || cat}
-                  <span style={{ marginLeft: '6px', fontSize: '11px', color: activeCategory === cat ? '#666' : '#ccc' }}>
-                    {(menu[cat] || []).length}
-                  </span>
+                  <span style={{ marginLeft: '6px', fontSize: '11px', color: activeCategory === cat ? '#666' : '#ccc' }}>{(menu[cat] || []).length}</span>
                 </button>
               ))}
             </div>
-
-            {/* Piatti categoria */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {filterItems(menu[activeCategory] || []).map(dish => (
-                <DishRow key={dish.id} {...dishRowProps(dish)} />
-              ))}
+              {filterItems(menu[activeCategory] || []).map(dish => <DishRow key={dish.id} {...dishRowProps(dish)} />)}
               <AddBtn label={`Aggiungi piatto a ${CATEGORY_LABELS[activeCategory]?.it || activeCategory}`} onClick={() => { setIsNew(true); setEditingDish(null) }} />
             </div>
-
-            {/* Gestione categorie */}
             <div style={{ marginTop: '32px', borderTop: '1px solid #f0f0f0', paddingTop: '24px' }}>
               <div style={{ fontSize: '11px', color: '#aaa', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '14px' }}>Gestisci categorie</div>
               <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                <input value={newCatName} onChange={e => setNewCatName(e.target.value)}
-                  placeholder="Nuova categoria..."
+                <input value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="Nuova categoria..."
                   onKeyDown={e => e.key === 'Enter' && addCategory()}
                   style={{ flex: 1, border: '1.5px solid #e8e8e8', borderRadius: '8px', padding: '9px 13px', fontSize: '13px', outline: 'none', fontFamily: "'DM Sans', sans-serif", color: '#222' }}
                   onFocus={e => e.target.style.borderColor = '#111'} onBlur={e => e.target.style.borderColor = '#e8e8e8'}
@@ -366,12 +340,11 @@ export default function App() {
           </>
         )}
 
-        {/* ══ DISPONIBILI / NON DISPONIBILI ══ */}
+        {/* DISPONIBILI / NON DISPONIBILI */}
         {(activeTab === 'disponibili' || activeTab === 'non-disponibili') && (() => {
           const showAvail = activeTab === 'disponibili'
           const listed  = filterItems(allItems.filter(d => d.available === showAvail))
           const others  = allItems.filter(d => d.available !== showAvail)
-
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {listed.length === 0 && (
@@ -379,10 +352,7 @@ export default function App() {
                   Nessun piatto {showAvail ? 'disponibile' : 'non disponibile'}
                 </div>
               )}
-              {listed.map(dish => (
-                <DishRow key={dish.id} {...dishRowProps(dish)} showCategory categoryLabel={CATEGORY_LABELS[dish._cat]?.it || dish._cat} />
-              ))}
-
+              {listed.map(dish => <DishRow key={dish.id} {...dishRowProps(dish)} showCategory categoryLabel={CATEGORY_LABELS[dish._cat]?.it || dish._cat} />)}
               {others.length > 0 && (
                 <div style={{ marginTop: '16px', border: '1px solid #f0f0f0', borderRadius: '16px', padding: '16px 20px' }}>
                   <div style={{ fontSize: '11px', color: '#aaa', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>
@@ -393,10 +363,7 @@ export default function App() {
                       <div key={dish.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <span style={{ flex: 1, fontFamily: "'Cormorant Garamond', serif", fontSize: '16px', color: '#555' }}>{t(dish.name)}</span>
                         <span style={{ fontSize: '12px', color: '#ccc', fontFamily: 'monospace' }}>{CATEGORY_LABELS[dish._cat]?.it || dish._cat}</span>
-                        <button onClick={() => toggleAvailability(dish.id)} style={{
-                          background: '#111', color: '#fff', border: 'none', borderRadius: '7px',
-                          padding: '5px 12px', fontSize: '12px', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontWeight: 600, whiteSpace: 'nowrap',
-                        }}>
+                        <button onClick={() => toggleAvailability(dish.id)} style={{ background: '#111', color: '#fff', border: 'none', borderRadius: '7px', padding: '5px 12px', fontSize: '12px', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontWeight: 600, whiteSpace: 'nowrap' }}>
                           {showAvail ? '▶ Rendi disponibile' : '⏸ Rendi non disp.'}
                         </button>
                       </div>
@@ -404,12 +371,10 @@ export default function App() {
                   </div>
                 </div>
               )}
-
               <AddBtn label="Aggiungi piatto" onClick={() => { setIsNew(true); setEditingDish(null) }} />
             </div>
           )
         })()}
-
       </div>
     </div>
   )
